@@ -49,24 +49,22 @@ export default function DashboardPage() {
         <section className="mx-auto max-w-6xl space-y-4">
           <BannerSlider images={banners} heightClass="h-52 sm:h-64 md:h-80" />
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 grid-cols-2">
             <Link href="/about" className="group card flex items-center gap-4 p-5 transition hover:-translate-y-1 hover:shadow-soft">
-              <div className="grid h-16 w-16 place-items-center rounded-3xl bg-emerald-50">
+              <div className="grid h-16 w-16 place-items-center rounded-3xl sm:bg-emerald-50">
                 <img src="/images/logoBana.png" alt="প্রাণের বানারীপাড়া" className="h-12 w-12 object-contain transition group-hover:scale-110" />
               </div>
               <div>
                 <h2 className="text-xl font-black text-slate-900">প্রাণের বানারীপাড়া</h2>
-                <p className="mt-1 text-sm font-semibold text-slate-500">এক নজরে বানারীপাড়া সম্পর্কিত তথ্য দেখুন</p>
               </div>
             </Link>
 
             <Link href="/admins" className="group card flex items-center gap-4 p-5 transition hover:-translate-y-1 hover:shadow-soft">
-              <div className="grid h-16 w-16 place-items-center rounded-3xl bg-emerald-50">
+              <div className="grid h-16 w-16 place-items-center rounded-3xl sm:bg-emerald-50">
                 <img src="/images/admin.png" alt="অ্যাডমিন পরিচিতি" className="h-12 w-12 object-contain transition group-hover:scale-110" />
               </div>
               <div>
                 <h2 className="text-xl font-black text-slate-900">অ্যাডমিনদের পরিচিতি</h2>
-                <p className="mt-1 text-sm font-semibold text-slate-500">অ্যাপ/ওয়েব পরিচালনা সংশ্লিষ্ট তথ্য</p>
               </div>
             </Link>
           </div>
@@ -83,7 +81,7 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+          <div className="grid grid-cols-3 gap-[5px] sm:gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
             {services.map((service) => (
               <Link
                 key={service.slug}
@@ -91,7 +89,7 @@ export default function DashboardPage() {
                 className="group rounded-[24px] border border-slate-100 bg-white p-4 text-center shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-soft"
               >
                 <img src={service.icon} alt={service.title} className="mx-auto h-14 w-14 object-contain transition group-hover:scale-110" />
-                <h3 className="mt-3 text-base font-black text-slate-800">{service.title}</h3>
+                <h3 className="mt-3 text-[14px] sm:text-base font-black text-slate-800">{service.title}</h3>
               </Link>
             ))}
           </div>
