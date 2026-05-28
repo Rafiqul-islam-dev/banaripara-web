@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 import AutoPushPermission from '@/components/AutoPushPermission';
-import PWAInstallButton from '@/components/PWAInstallButton';
 import PushNotificationButton from '@/components/PushNotificationButton';
 import { getUser, removeUser } from '@/lib/auth';
 
@@ -65,7 +65,22 @@ function goTo(url) {
   }
 }
 
+function isMenuActive(pathname, href) {
+  if (!pathname) return false;
+
+  if (href === '/dashboard') {
+    return pathname === '/' || pathname === '/dashboard' || pathname.startsWith('/services');
+  }
+
+  if (href === '/about') {
+    return pathname === '/about' || pathname.startsWith('/about/');
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export default function AppShell({ children }) {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
 
@@ -97,7 +112,7 @@ export default function AppShell({ children }) {
 
   return (
     <>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 pb-20 lg:pb-0">
         <header className="sticky top-0 z-40 border-b border-emerald-100 bg-white/90 shadow-sm backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
             <button
@@ -122,22 +137,28 @@ export default function AppShell({ children }) {
             </button>
 
             <nav className="hidden items-center gap-2 lg:flex">
-              {mainMenus.map((menu) => (
-                <a
-                  key={menu.href}
-                  href={menu.href}
-                  className="rounded-2xl px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
-                >
-                  <span className="mr-1">{menu.icon}</span>
-                  {menu.title}
-                </a>
-              ))}
+              {mainMenus.map((menu) => {
+                const active = isMenuActive(pathname, menu.href);
+
+                return (
+                  <a
+                    key={menu.href}
+                    href={menu.href}
+                    className={`rounded-2xl px-4 py-2 text-sm font-black transition ${
+                      active
+                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100'
+                        : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
+                    }`}
+                  >
+                    <span className="mr-1">{menu.icon}</span>
+                    {menu.title}
+                  </a>
+                );
+              })}
             </nav>
 
             <div className="hidden items-center gap-2 lg:flex">
               <PushNotificationButton />
-
-              <PWAInstallButton />
 
               <a
                 href={APP_DOWNLOAD_LINK}
@@ -183,16 +204,24 @@ export default function AppShell({ children }) {
             <div className="border-t border-emerald-100 bg-white px-4 pb-4 lg:hidden">
               <div className="mx-auto max-w-7xl space-y-3 pt-4">
                 <div className="grid grid-cols-2 gap-3">
-                  {mainMenus.map((menu) => (
-                    <a
-                      key={menu.href}
-                      href={menu.href}
-                      className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800"
-                    >
-                      <span className="mr-1">{menu.icon}</span>
-                      {menu.title}
-                    </a>
-                  ))}
+                  {mainMenus.map((menu) => {
+                    const active = isMenuActive(pathname, menu.href);
+
+                    return (
+                      <a
+                        key={menu.href}
+                        href={menu.href}
+                        className={`rounded-2xl px-4 py-3 text-sm font-black ${
+                          active
+                            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100'
+                            : 'bg-emerald-50 text-emerald-800'
+                        }`}
+                      >
+                        <span className="mr-1">{menu.icon}</span>
+                        {menu.title}
+                      </a>
+                    );
+                  })}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -212,8 +241,6 @@ export default function AppShell({ children }) {
 
                 <div className="grid gap-3">
                   <PushNotificationButton />
-
-                  <PWAInstallButton />
 
                   <a
                     href={APP_DOWNLOAD_LINK}
@@ -257,16 +284,26 @@ export default function AppShell({ children }) {
 
         <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-100 bg-white/95 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
           <div className="mx-auto grid max-w-md grid-cols-4 px-2 py-2">
-            {mainMenus.slice(0, 4).map((menu) => (
-              <a
-                key={menu.href}
-                href={menu.href}
-                className="flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-xs font-black text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                <span className="text-xl">{menu.icon}</span>
-                <span className="mt-1 line-clamp-1">{menu.title}</span>
-              </a>
-            ))}
+            {mainMenus.slice(0, 4).map((menu) => {
+              const active = isMenuActive(pathname, menu.href);
+
+              return (
+                <a
+                  key={menu.href}
+                  href={menu.href}
+                  className={`flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-xs font-black transition ${
+                    active
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'
+                  }`}
+                >
+                  <span className={`text-xl ${active ? 'scale-110' : ''}`}>
+                    {menu.icon}
+                  </span>
+                  <span className="mt-1 line-clamp-1">{menu.title}</span>
+                </a>
+              );
+            })}
           </div>
         </nav>
       </div>
