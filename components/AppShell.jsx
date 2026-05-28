@@ -1,184 +1,277 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getUser, logoutUser } from '@/lib/auth';
 
-const mainNavItems = [
-  { href: '/dashboard', label: 'হোম', icon: '🏠' },
-  { href: '/notifications', label: 'নোটিফিকেশন', icon: '🔔' },
-  { href: '/admins', label: 'অ্যাডমিন', icon: '👥' },
-  { href: '/about', label: 'বানারীপাড়া', icon: '🌿' },
+import AutoPushPermission from '@/components/AutoPushPermission';
+import PWAInstallButton from '@/components/PWAInstallButton';
+import PushNotificationButton from '@/components/PushNotificationButton';
+import { getUser, removeUser } from '@/lib/auth';
+
+const APP_DOWNLOAD_LINK = 'https://banaripara-zeta.vercel.app/banaripara.apk';
+
+const mainMenus = [
+  {
+    title: 'হোম',
+    href: '/dashboard',
+    icon: '🏠',
+  },
+  {
+    title: 'প্রাণের বানারীপাড়া',
+    href: '/about',
+    icon: '💚',
+  },
+  {
+    title: 'নোটিফিকেশন',
+    href: '/notifications',
+    icon: '🔔',
+  },
+  {
+    title: 'ডেভেলপার',
+    href: '/developer',
+    icon: '💻',
+  },
 ];
 
-const APK_DOWNLOAD_LINK = 'https://banaripara-zeta.vercel.app/banaripara.apk';
-
-const moreMenuItems = [
-  { href: APK_DOWNLOAD_LINK, label: 'অ্যাপ ডাউনলোড', icon: '⬇️' },
-  { href: '/developer', label: 'অ্যাপ ডেভেলপার সম্পর্কে', icon: '💻', internal: true },
-  { href: 'https://www.facebook.com/groups/1475251976059265', label: 'ফেসবুক পেইজ', icon: '👍' },
-  { href: 'https://www.facebook.com/groups/1475251976059265', label: 'ফেসবুক গ্রুপ', icon: '👥' },
-  { href: 'https://www.instagram.com/', label: 'ইনস্টাগ্রাম', icon: '📸' },
-  { href: 'https://www.youtube.com/', label: 'ইউটিউব', icon: '▶️' },
-  { href: 'tel:', label: 'কল করুন', icon: '📞' },
-  { href: 'sms:', label: 'ম্যাসেজ করুন', icon: '💬' },
-  { href: 'mailto:', label: 'ইমেইল করুন', icon: '✉️' },
-  { href: '/privacy', label: 'গোপনীয়তা', icon: '🛡️', internal: true },
+const socialMenus = [
+  {
+    title: 'ফেসবুক পেইজ',
+    href: 'https://www.facebook.com/',
+    icon: '📘',
+    external: true,
+  },
+  {
+    title: 'ফেসবুক গ্রুপ',
+    href: 'https://www.facebook.com/groups/',
+    icon: '👥',
+    external: true,
+  },
+  {
+    title: 'ইনস্টাগ্রাম',
+    href: 'https://www.instagram.com/',
+    icon: '📷',
+    external: true,
+  },
+  {
+    title: 'ইউটিউব',
+    href: 'https://www.youtube.com/',
+    icon: '▶️',
+    external: true,
+  },
 ];
 
-function isExternalHref(href = '') {
-  return href.startsWith('http') || href.startsWith('tel:') || href.startsWith('sms:') || href.startsWith('mailto:');
+function goTo(url) {
+  if (typeof window !== 'undefined') {
+    window.location.href = url;
+  }
 }
 
 export default function AppShell({ children }) {
-  const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [mounted, setMounted] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setUser(getUser());
+    const loadUser = () => {
+      setUser(getUser());
+    };
 
-    const syncUser = () => setUser(getUser());
-    window.addEventListener('storage', syncUser);
-    window.addEventListener('banaripara-user-changed', syncUser);
+    loadUser();
+
+    window.addEventListener('banaripara-user-changed', loadUser);
+    window.addEventListener('storage', loadUser);
 
     return () => {
-      window.removeEventListener('storage', syncUser);
-      window.removeEventListener('banaripara-user-changed', syncUser);
+      window.removeEventListener('banaripara-user-changed', loadUser);
+      window.removeEventListener('storage', loadUser);
     };
   }, []);
 
   const handleLogout = () => {
-    logoutUser();
+    removeUser();
     setUser(null);
-    window.dispatchEvent(new Event('banaripara-user-changed'));
-    window.location.href = '/dashboard';
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('banaripara-user-changed'));
+      window.location.href = '/dashboard';
+    }
   };
 
-  const isActive = (href) => pathname === href || (href === '/dashboard' && pathname === '/');
-
   return (
-    <div className="page-bg min-h-screen pb-24 lg:pb-8">
-      <header className="sticky top-0 z-40 border-b border-emerald-100 bg-white/90 shadow-sm backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 lg:px-6">
-          <a href="/dashboard" className="flex items-center gap-3">
-            <img src="/images/logoBana.png" alt="প্রাণের বানারীপাড়া" className="h-16 w-16 rounded-2xl object-contain shadow-sm" />
-            <div>
-              <h1 className="text-xl font-black leading-5 text-slate-900 md:text-2xl">প্রাণের বানারীপাড়া</h1>
-            </div>
-          </a>
+    <>
+      <div className="min-h-screen bg-slate-50">
+        <header className="sticky top-0 z-40 border-b border-emerald-100 bg-white/90 shadow-sm backdrop-blur">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
+            <button
+              type="button"
+              onClick={() => goTo('/dashboard')}
+              className="flex items-center gap-3 text-left"
+            >
+              <img
+                src="/images/logoBana.png"
+                alt="Banaripara"
+                className="h-12 w-12 rounded-2xl bg-emerald-50 object-contain p-1 shadow-sm"
+              />
 
-          <nav className="hidden items-center gap-2 lg:flex">
-            {mainNavItems.map((item) => (
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-600">
+                  Banaripara
+                </p>
+                <h1 className="text-lg font-black leading-5 text-slate-900 md:text-xl">
+                  প্রাণের বানারীপাড়া
+                </h1>
+              </div>
+            </button>
+
+            <nav className="hidden items-center gap-2 lg:flex">
+              {mainMenus.map((menu) => (
+                <a
+                  key={menu.href}
+                  href={menu.href}
+                  className="rounded-2xl px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
+                >
+                  <span className="mr-1">{menu.icon}</span>
+                  {menu.title}
+                </a>
+              ))}
+            </nav>
+
+            <div className="hidden items-center gap-2 lg:flex">
+              <PushNotificationButton />
+
+              <PWAInstallButton />
+
               <a
-                key={item.href}
-                href={item.href}
-                className={`rounded-2xl px-4 py-2 text-sm font-black transition ${isActive(item.href) ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}`}
+                href={APP_DOWNLOAD_LINK}
+                className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700"
               >
-                <span className="mr-1">{item.icon}</span>{item.label}
+                📲 অ্যাপ ডাউনলোড
               </a>
-            ))}
 
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((value) => !value)}
-                className="rounded-2xl px-4 py-2 text-sm font-black text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                ☰ আরও
-              </button>
-              {menuOpen && (
-                <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-3xl border border-slate-100 bg-white p-2 shadow-2xl">
-                  {moreMenuItems.map((item) => (
-                    <a
-                      key={item.label}
-                      href={item.href}
-                      target={isExternalHref(item.href) && item.href.startsWith('http') ? '_blank' : undefined}
-                      rel={isExternalHref(item.href) && item.href.startsWith('http') ? 'noreferrer' : undefined}
-                      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
-                    >
-                      <span>{item.icon}</span>{item.label}
-                    </a>
-                  ))}
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <div className="rounded-2xl bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-700">
+                    {user.name || user.phone}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="rounded-2xl bg-red-50 px-3 py-2 text-sm font-black text-red-600 transition hover:bg-red-100"
+                  >
+                    Logout
+                  </button>
                 </div>
+              ) : (
+                <a
+                  href="/login"
+                  className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-black text-white transition hover:bg-slate-700"
+                >
+                  Login
+                </a>
               )}
             </div>
-          </nav>
 
-          <div className="flex items-center gap-2">
-            <a
-              href={APK_DOWNLOAD_LINK}
-              className="hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:scale-105 md:inline-flex"
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((value) => !value)}
+              className="rounded-2xl bg-emerald-50 px-4 py-3 text-xl font-black text-emerald-700 lg:hidden"
             >
-              ⬇️ অ্যাপ ডাউনলোড
-            </a>
-            {mounted && user ? (
-              <div className="hidden items-center gap-3 rounded-2xl bg-emerald-50 px-3 py-2 md:flex">
-                <div className="text-right">
-                  <p className="text-xs text-slate-400">Logged in</p>
-                  <p className="text-sm font-black text-slate-900">{user.name || 'User'}</p>
-                </div>
-                <button type="button" onClick={handleLogout} className="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-600 hover:bg-red-100">Logout</button>
-              </div>
-            ) : (
-              <div className="hidden gap-2 md:flex">
-                <a href="/login" className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-black text-white">Login</a>
-                <a href="/register" className="rounded-2xl bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">Register</a>
-              </div>
-            )}
-
-            <button type="button" onClick={() => setMenuOpen((value) => !value)} className="rounded-2xl bg-emerald-50 px-3 py-2 text-xl font-black text-emerald-700 lg:hidden">
               ☰
             </button>
           </div>
-        </div>
 
-        {menuOpen && (
-          <div className="border-t border-emerald-100 bg-white px-4 py-3 lg:hidden">
-            <div className="mx-auto grid max-w-7xl grid-cols-2 gap-2 sm:grid-cols-3">
-              {[...mainNavItems, ...moreMenuItems].map((item) => (
-                <a
-                  key={`${item.href}-${item.label}`}
-                  href={item.href}
-                  target={isExternalHref(item.href) && item.href.startsWith('http') ? '_blank' : undefined}
-                  rel={isExternalHref(item.href) && item.href.startsWith('http') ? 'noreferrer' : undefined}
-                  className="rounded-2xl bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600"
-                >
-                  <span className="mr-1">{item.icon}</span>{item.label}
-                </a>
-              ))}
-              <a href={APK_DOWNLOAD_LINK} className="rounded-2xl bg-emerald-600 px-3 py-3 text-center text-sm font-black text-white">⬇️ অ্যাপ ডাউনলোড</a>
-              {mounted && user ? (
-                <button type="button" onClick={handleLogout} className="rounded-2xl bg-red-50 px-3 py-3 text-left text-sm font-black text-red-600">Logout</button>
-              ) : (
-                <>
-                  <a href="/login" className="rounded-2xl bg-emerald-600 px-3 py-3 text-center text-sm font-black text-white">Login</a>
-                  <a href="/register" className="rounded-2xl bg-emerald-50 px-3 py-3 text-center text-sm font-black text-emerald-700">Register</a>
-                </>
-              )}
+          {mobileMenuOpen && (
+            <div className="border-t border-emerald-100 bg-white px-4 pb-4 lg:hidden">
+              <div className="mx-auto max-w-7xl space-y-3 pt-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {mainMenus.map((menu) => (
+                    <a
+                      key={menu.href}
+                      href={menu.href}
+                      className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800"
+                    >
+                      <span className="mr-1">{menu.icon}</span>
+                      {menu.title}
+                    </a>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {socialMenus.map((menu) => (
+                    <a
+                      key={menu.title}
+                      href={menu.href}
+                      target={menu.external ? '_blank' : undefined}
+                      rel={menu.external ? 'noreferrer' : undefined}
+                      className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-700"
+                    >
+                      <span className="mr-1">{menu.icon}</span>
+                      {menu.title}
+                    </a>
+                  ))}
+                </div>
+
+                <div className="grid gap-3">
+                  <PushNotificationButton />
+
+                  <PWAInstallButton />
+
+                  <a
+                    href={APP_DOWNLOAD_LINK}
+                    className="rounded-2xl bg-emerald-600 px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-emerald-100"
+                  >
+                    📲 অ্যাপ ডাউনলোড
+                  </a>
+
+                  {user ? (
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-black text-red-600"
+                    >
+                      Logout
+                    </button>
+                  ) : (
+                    <a
+                      href="/login"
+                      className="rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-black text-white"
+                    >
+                      Login
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
+          )}
+        </header>
+
+        <main className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6 md:py-8">
+          {children}
+        </main>
+
+        <footer className="mt-8 border-t border-emerald-100 bg-white">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-center text-sm font-semibold text-slate-500 md:flex-row md:items-center md:justify-between md:px-6 md:text-left">
+            <p>© {new Date().getFullYear()} প্রাণের বানারীপাড়া</p>
+            <p>Banaripara digital information platform</p>
           </div>
-        )}
-      </header>
+        </footer>
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-6">{children}</main>
+        <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-100 bg-white/95 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
+          <div className="mx-auto grid max-w-md grid-cols-4 px-2 py-2">
+            {mainMenus.slice(0, 4).map((menu) => (
+              <a
+                key={menu.href}
+                href={menu.href}
+                className="flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-xs font-black text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700"
+              >
+                <span className="text-xl">{menu.icon}</span>
+                <span className="mt-1 line-clamp-1">{menu.title}</span>
+              </a>
+            ))}
+          </div>
+        </nav>
+      </div>
 
-      <nav className="safe-bottom fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-100 bg-white/95 px-2 py-2 shadow-[0_-10px_35px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid max-w-xl grid-cols-4 gap-1">
-          {mainNavItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className={`rounded-2xl px-2 py-2 text-center text-xs font-bold transition ${isActive(item.href) ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}
-            >
-              <div className="text-xl leading-5">{item.icon}</div>
-              <div className="mt-1 truncate">{item.label}</div>
-            </a>
-          ))}
-        </div>
-      </nav>
-    </div>
+      <AutoPushPermission />
+    </>
   );
 }
