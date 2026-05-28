@@ -1,25 +1,43 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { enableWebPushNotification } from '@/lib/webPush';
+import {
+  enableWebPushNotification,
+  saveWebPushError,
+} from '@/lib/webPush';
 
 const STORAGE_KEY = 'banaripara_push_permission_popup_seen';
 
 export default function AutoPushPermission() {
   const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorText, setErrorText] = useState('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
     if (!('Notification' in window)) return;
 
-    const alreadySeen = localStorage.getItem(STORAGE_KEY);
     const permission = Notification.permission;
 
-    if (permission === 'granted' || permission === 'denied' || alreadySeen === 'yes') {
+    // If user already allowed notification, still register/save the FCM token.
+    // This fixes the case where permission was allowed but web_push_tokens was not created.
+    if (permission === 'granted') {
+      enableWebPushNotification()
+        .then(() => {
+          localStorage.setItem(STORAGE_KEY, 'yes');
+        })
+        .catch((error) => {
+          console.error('Auto web push token save failed:', error);
+          saveWebPushError(error);
+        });
       return;
     }
+
+    if (permission === 'denied') return;
+
+    const alreadySeen = localStorage.getItem(STORAGE_KEY);
+
+    if (alreadySeen === 'yes') return;
 
     const timer = setTimeout(() => {
       setShowPopup(true);
@@ -30,15 +48,18 @@ export default function AutoPushPermission() {
 
   const handleAllow = async () => {
     setLoading(true);
+    setErrorText('');
 
     try {
       await enableWebPushNotification();
       localStorage.setItem(STORAGE_KEY, 'yes');
       setShowPopup(false);
     } catch (error) {
-      console.error('Push permission error:', error);
-      localStorage.setItem(STORAGE_KEY, 'yes');
-      setShowPopup(false);
+      console.error('Push permission/token error:', error);
+      saveWebPushError(error);
+      setErrorText(error?.message || 'নোটিফিকেশন চালু করা যায়নি।');
+      // Do not hide forever when there is an error.
+      // User can fix env/permission and try again.
     } finally {
       setLoading(false);
     }
@@ -65,6 +86,12 @@ export default function AutoPushPermission() {
         <p className="mt-3 text-center text-sm font-semibold leading-7 text-slate-600">
           নতুন তথ্য, জরুরি আপডেট এবং গুরুত্বপূর্ণ ঘোষণা পেতে নোটিফিকেশন allow করুন।
         </p>
+
+        {errorText ? (
+          <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
+            {errorText}
+          </p>
+        ) : null}
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <button

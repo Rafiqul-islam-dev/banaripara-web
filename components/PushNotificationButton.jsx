@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-import { isWebPushEnabledLocally, registerWebPushToken } from '@/lib/webPush';
+import {
+  getWebPushLastError,
+  isWebPushEnabledLocally,
+  registerWebPushToken,
+  saveWebPushError,
+} from '@/lib/webPush';
 
 export default function PushNotificationButton() {
   const [enabled, setEnabled] = useState(false);
@@ -11,6 +16,11 @@ export default function PushNotificationButton() {
 
   useEffect(() => {
     setEnabled(isWebPushEnabledLocally());
+
+    const lastError = getWebPushLastError();
+    if (lastError) {
+      console.warn('Last web push error:', lastError);
+    }
   }, []);
 
   const handleEnable = async () => {
@@ -22,10 +32,12 @@ export default function PushNotificationButton() {
       setEnabled(true);
       setMessage('নোটিফিকেশন চালু হয়েছে।');
     } catch (error) {
-      setMessage(error.message || 'নোটিফিকেশন চালু করা যায়নি।');
+      console.error('Web push enable failed:', error);
+      saveWebPushError(error);
+      setMessage(error?.message || 'নোটিফিকেশন চালু করা যায়নি।');
     } finally {
       setLoading(false);
-      setTimeout(() => setMessage(''), 5000);
+      setTimeout(() => setMessage(''), 7000);
     }
   };
 
@@ -34,7 +46,7 @@ export default function PushNotificationButton() {
       <button
         type="button"
         onClick={handleEnable}
-        disabled={loading || enabled}
+        disabled={loading}
         className={`rounded-2xl px-4 py-2 text-sm font-black shadow-lg transition ${
           enabled
             ? 'bg-emerald-50 text-emerald-700 shadow-emerald-50'
@@ -46,7 +58,7 @@ export default function PushNotificationButton() {
       </button>
 
       {message ? (
-        <div className="absolute right-0 top-full z-[90] mt-2 w-72 rounded-2xl border border-emerald-100 bg-white p-3 text-xs font-bold text-slate-700 shadow-2xl">
+        <div className="absolute right-0 top-full z-[90] mt-2 w-80 rounded-2xl border border-emerald-100 bg-white p-3 text-xs font-bold text-slate-700 shadow-2xl">
           {message}
         </div>
       ) : null}
