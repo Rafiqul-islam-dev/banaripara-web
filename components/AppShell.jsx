@@ -7,7 +7,7 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import AutoPushPermission from '@/components/AutoPushPermission';
 import PushNotificationButton from '@/components/PushNotificationButton';
 import { db } from '@/lib/firebase';
-import { getUser, removeUser } from '@/lib/auth';
+import { getUser } from '@/lib/auth';
 
 const APP_DOWNLOAD_LINK = 'https://banaripara-zeta.vercel.app/banaripara.apk';
 const READ_STORAGE_KEY = 'banaripara_read_notifications';
@@ -215,14 +215,17 @@ export default function AppShell({ children }) {
   }, [notifications, readIds]);
 
   const handleLogout = () => {
-    removeUser();
-    setUser(null);
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('banaripara_user');
+    localStorage.removeItem('user');
+    localStorage.removeItem('currentUser');
 
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('banaripara-user-changed'));
-      window.location.href = '/dashboard';
-    }
-  };
+    window.dispatchEvent(new Event('banaripara-user-changed'));
+    window.location.href = '/dashboard';
+  }
+
+  setUser(null);
+};
 
   return (
     <>
