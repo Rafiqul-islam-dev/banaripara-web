@@ -43,7 +43,7 @@ export default function AboutPage() {
         </section>
 
         <section className="text-center">
-          <p className="text-sm font-black uppercase tracking-[0.28em] text-emerald-600">প্রাণের বানারীপাড়া</p>
+          <p className="text-sm font-black uppercase tracking-[0.28em] text-emerald-600">আমাদের বানারীপাড়া</p>
           <h1 className="mx-auto mt-3 max-w-3xl text-3xl font-black leading-tight text-emerald-600 md:text-5xl">
             এক নজরে দেখে নিন আমার আপনার প্রিয় বানারীপাড়া
           </h1>

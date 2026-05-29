@@ -40,7 +40,7 @@ export default function DashboardPage() {
     <AppShell>
       <div className="space-y-6">
         <Header
-          title="প্রাণের বানারীপাড়া"
+          title="আমাদের বানারীপাড়া"
           badge="Welcome"
           icon="🌿"
           subtitle="বানারীপাড়ার প্রয়োজনীয় তথ্য, সেবা, প্রতিষ্ঠান, জরুরি নাম্বার এবং কমিউনিটি আপডেট এক জায়গায়।"
@@ -52,10 +52,10 @@ export default function DashboardPage() {
           <div className="grid gap-4 grid-cols-2">
             <Link href="/about" className="group card flex items-center gap-4 p-5 transition hover:-translate-y-1 hover:shadow-soft">
               <div className="grid h-16 w-16 place-items-center rounded-3xl sm:bg-emerald-50">
-                <img src="/images/logoBana.png" alt="প্রাণের বানারীপাড়া" className="h-12 w-12 object-contain transition group-hover:scale-110" />
+                <img src="/images/logoBana.png" alt="আমাদের বানারীপাড়া" className="h-12 w-12 object-contain transition group-hover:scale-110" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-slate-900">প্রাণের বানারীপাড়া</h2>
+                <h2 className="text-xl font-black text-slate-900">আমাদের বানারীপাড়া</h2>
               </div>
             </Link>
 

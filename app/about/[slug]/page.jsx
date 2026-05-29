@@ -268,7 +268,7 @@ export default function AboutDetailsPage({ params }) {
     <AppShell>
       <div className="mx-auto max-w-6xl space-y-6">
         <Link href="/about" className="inline-flex items-center rounded-2xl bg-emerald-50 px-4 py-2 font-black text-emerald-700">
-          ← প্রাণের বানারীপাড়া
+          ← আমাদের বানারীপাড়া
         </Link>
         <Hero item={item} />
         <RenderContent item={item} />

@@ -1,7 +1,7 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'প্রাণের বানারীপাড়া',
+  title: 'আমাদের বানারীপাড়া',
   description: 'Banaripara digital information web app',
 };
 

@@ -1,4 +1,4 @@
-# প্রাণের বানারীপাড়া - React Website
+# আমাদের বানারীপাড়া - React Website
 
 এটি Flutter mobile app-এর user-side features অনুযায়ী তৈরি করা Next.js + Firebase ওয়েব অ্যাপ। Vercel-এ deploy করা যাবে।
 

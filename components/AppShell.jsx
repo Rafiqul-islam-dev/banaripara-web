@@ -19,7 +19,7 @@ const mainMenus = [
     icon: '🏠',
   },
   {
-    title: 'প্রাণের বানারীপাড়া',
+    title: 'আমাদের বানারীপাড়া',
     href: '/about',
     icon: '💚',
   },
@@ -242,10 +242,10 @@ export default function AppShell({ children }) {
 
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-600">
-                  Banaripara
+                  Our Banaripara
                 </p>
                 <h1 className="text-lg font-black leading-5 text-slate-900 md:text-xl">
-                  প্রাণের বানারীপাড়া
+                  আমাদের বানারীপাড়া
                 </h1>
               </div>
             </button>
@@ -275,12 +275,12 @@ export default function AppShell({ children }) {
             <div className="hidden items-center gap-2 lg:flex">
               <PushNotificationButton />
 
-              <a
+              {/* <a
                 href={APP_DOWNLOAD_LINK}
                 className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700"
               >
                 📲 অ্যাপ ডাউনলোড
-              </a>
+              </a> */}
 
               {user ? (
                 <div className="flex items-center gap-2">
@@ -393,7 +393,7 @@ export default function AppShell({ children }) {
 
         <footer className="mt-8 border-t border-emerald-100 bg-white">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-center text-sm font-semibold text-slate-500 md:flex-row md:items-center md:justify-between md:px-6 md:text-left">
-            <p>© {new Date().getFullYear()} প্রাণের বানারীপাড়া</p>
+            <p>© {new Date().getFullYear()} আমাদের বানারীপাড়া</p>
             <p>Banaripara digital information platform</p>
           </div>
         </footer>

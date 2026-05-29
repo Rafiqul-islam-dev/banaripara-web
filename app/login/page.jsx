@@ -74,7 +74,7 @@ function LoginContent() {
           />
 
           <h1 className="mt-8 text-4xl font-black leading-tight">
-            প্রাণের বানারীপাড়া
+            আমাদের বানারীপাড়া
           </h1>
 
           <p className="mt-4 leading-8 text-emerald-50">
