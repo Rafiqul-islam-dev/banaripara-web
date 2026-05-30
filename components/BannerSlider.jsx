@@ -10,7 +10,7 @@ export default function BannerSlider({ images = [], heightClass = 'h-56 md:h-72'
     if (cleanImages.length <= 1) return;
     const timer = setInterval(() => {
       setIndex((current) => (current + 1) % cleanImages.length);
-    }, 3500);
+    }, 5500);
     return () => clearInterval(timer);
   }, [cleanImages.length]);
 
