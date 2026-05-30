@@ -33,6 +33,17 @@ function isBusScheduleService(service) {
   );
 }
 
+function isBloodDonorService(service) {
+  if (!service) return false;
+
+  return (
+    service.slug === 'blood' ||
+    service.slug === 'blood-donors' ||
+    service.slug === 'blood_donors' ||
+    service.collection === 'blood_donors'
+  );
+}
+
 function getBusScheduleText(item) {
   return valueForCard(item, [
     'schedule',
@@ -134,7 +145,7 @@ function ShareModal({ item, service, onClose }) {
   const title = valueForCard(item, ['name','title','job_title','bus_name']) || service?.title || 'বানারীপাড়া';
   const phone = valueForCard(item, ['phone','mobile','number']);
   const address = valueForCard(item, ['address','route','chamber']);
-  const details = valueForCard(item, ['details','description','service_type','specialty','designation']);
+  const details = valueForCard(item, ['details','description','service_type','specialty','designation','blood_group','bloodGroup']);
   const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
   const shareText = `${service?.title}: ${title}${phone ? '\n📞 ' + phone : ''}${address ? '\n📍 ' + address : ''}${details ? '\n' + details.slice(0,80) + (details.length>80?'...':'') : ''}\n\n🌐 ${pageUrl}`;
 
@@ -274,16 +285,20 @@ function ShareModal({ item, service, onClose }) {
 
 function DetailsModal({ item, service, onClose }) {
   const isDoctorService = service?.slug === 'doctors';
+  const isBloodService = isBloodDonorService(service);
   const title = getTitle(item, service);
   const phone = valueForCard(item, ['phone', 'mobile', 'number']);
   const address = valueForCard(item, ['address', 'route']);
   const chamber = valueForCard(item, ['chamber']);
   const role = getRoleText(item);
   const treatment = getTreatmentText(item);
+  const bloodGroup = valueForCard(item, ['blood_group', 'bloodGroup', 'group', 'blood']);
+  const lastDonation = valueForCard(item, ['last_donation', 'lastDonation', 'last_donate_date']);
   const details = valueForCard(item, ['details', 'description', 'service_details']);
 
   const rows = [
     ['পদবি/সেবার ধরন', role],
+    ...(isBloodService ? [['রক্তের গ্রুপ', bloodGroup]] : []),
     ...(isDoctorService
       ? [['বিশেষত্ব/ক্যাটাগরি', valueForCard(item, ['category', 'specialty', 'specialist'])]]
       : []),
@@ -294,6 +309,7 @@ function DetailsModal({ item, service, onClose }) {
     [isDoctorService ? 'চেম্বার' : 'ঠিকানা', isDoctorService ? chamber || address : address],
     ...(isDoctorService ? [['অভিজ্ঞতা', item.experience]] : []),
     ['অফিস সময়', item.office_time],
+    ...(isBloodService ? [['শেষ রক্তদান', lastDonation]] : []),
     ...(isDoctorService ? [['যেই যেই রোগের চিকিৎসা করেন', treatment]] : []),
     ['বিস্তারিত', details],
     ['ফোন', phone],
@@ -442,11 +458,13 @@ function ServiceCard({ item, service, onShare, onDetails, onSchedule }) {
   const treatment = getTreatmentText(item);
   const details = getLongDetailsText(item);
   const image = valueForCard(item, ['image', 'image_url', 'photo']);
+  const bloodGroup = valueForCard(item, ['blood_group', 'bloodGroup', 'group', 'blood']);
+  const lastDonation = valueForCard(item, ['last_donation', 'lastDonation', 'last_donate_date']);
   const busService = isBusScheduleService(service);
   const isDoctor = service?.slug === 'doctors';
   const isPolice = service?.slug === 'police';
   const isHospital = service?.slug === 'hospitals';
-  const isBlood = service?.slug === 'blood';
+  const isBlood = isBloodDonorService(service);
   const hasExtraDetails = Boolean(
     details ||
     treatment ||
@@ -455,7 +473,9 @@ function ServiceCard({ item, service, onShare, onDetails, onSchedule }) {
     item.experience ||
     item.office_time ||
     item.workplace ||
-    item.current_workplace
+    item.current_workplace ||
+    bloodGroup ||
+    lastDonation
   );
 
   const headerIcon = busService
@@ -495,6 +515,11 @@ function ServiceCard({ item, service, onShare, onDetails, onSchedule }) {
                   {category}
                 </span>
               )}
+              {bloodGroup && (
+                <span className="rounded-full bg-red-500/30 px-3 py-1 text-xs font-black text-white ring-1 ring-white/20">
+                  🩸 {bloodGroup}
+                </span>
+              )}
               {role && (isPolice || !category) && (
                 <span className="rounded-full bg-sky-400/25 px-3 py-1 text-xs font-black text-white ring-1 ring-white/15">
                   {role}
@@ -529,6 +554,11 @@ function ServiceCard({ item, service, onShare, onDetails, onSchedule }) {
                   else e.currentTarget.style.display = 'none';
                 }}
               />
+            ) : isBlood ? (
+              <div className="flex h-full w-full flex-col items-center justify-center bg-red-50 text-red-600">
+                <span className="text-3xl">🩸</span>
+                <span className="mt-1 text-xl font-black">{bloodGroup || 'রক্ত'}</span>
+              </div>
             ) : service?.icon ? (
               <img src={service.icon} alt="" className="h-14 w-14 object-contain" />
             ) : (
@@ -549,6 +579,8 @@ function ServiceCard({ item, service, onShare, onDetails, onSchedule }) {
         </div>
 
         <div className="space-y-2">
+          {bloodGroup && <MiniInfo icon="🩸">রক্তের গ্রুপ: {bloodGroup}</MiniInfo>}
+          {lastDonation && <MiniInfo icon="⏰">শেষ রক্তদান: {lastDonation}</MiniInfo>}
           {item.education && <MiniInfo icon="🎓">{item.education}</MiniInfo>}
           {item.chamber && <MiniInfo icon="🏥">{item.chamber}</MiniInfo>}
           {address && !item.chamber && <MiniInfo icon="📍">{address}</MiniInfo>}
