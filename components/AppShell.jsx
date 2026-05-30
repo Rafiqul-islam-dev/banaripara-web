@@ -39,13 +39,13 @@ const mainMenus = [
 const socialMenus = [
   {
     title: 'ফেসবুক পেইজ',
-    href: 'https://www.facebook.com/',
+    href: 'https://www.facebook.com/groups/1475251976059265',
     icon: '📘',
     external: true,
   },
   {
     title: 'ফেসবুক গ্রুপ',
-    href: 'https://www.facebook.com/groups/',
+    href: 'https://www.facebook.com/groups/1475251976059265',
     icon: '👥',
     external: true,
   },
