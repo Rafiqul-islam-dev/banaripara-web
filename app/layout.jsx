@@ -1,6 +1,7 @@
 import './globals.css';
 import PWAInstallButton from '@/components/PWAInstallButton';
 import PWARegister from '@/components/PWARegister';
+import VisitorTracker from '@/components/VisitorTracker';
 
 export const metadata = {
   title: {
@@ -36,6 +37,7 @@ export default function RootLayout({ children }) {
     <html lang="bn">
       <body>
         <PWARegister />
+        <VisitorTracker />
         {children}
         <PWAInstallButton />
       </body>

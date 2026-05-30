@@ -4,7 +4,10 @@ import PWARegister from '@/components/PWARegister';
 import VisitorTracker from '@/components/VisitorTracker';
 
 export const metadata = {
-  title: 'Banaripara',
+  title: {
+    default: 'Banaripara',
+    template: '%s',
+  },
   description: 'Banaripara digital information web app',
   manifest: '/manifest.json',
   applicationName: 'Banaripara',

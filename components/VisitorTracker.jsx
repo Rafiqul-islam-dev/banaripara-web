@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
+import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase';
 
 const VISITOR_ID_KEY = 'banaripara_visitor_id';
 const SESSION_ID_KEY = 'banaripara_session_id';
-const HEARTBEAT_MS = 30000;
+const HEARTBEAT_MS = 15000;
 const ACTIVE_WINDOW_SECONDS = 90;
 
 function createId(prefix) {
@@ -18,17 +19,30 @@ function createId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-function getOrCreateLocalId(key, prefix) {
+function getOrCreateLocalId() {
   if (typeof window === 'undefined') return '';
 
-  let id = localStorage.getItem(key);
+  let visitorId = localStorage.getItem(VISITOR_ID_KEY);
 
-  if (!id) {
-    id = createId(prefix);
-    localStorage.setItem(key, id);
+  if (!visitorId) {
+    visitorId = createId('visitor');
+    localStorage.setItem(VISITOR_ID_KEY, visitorId);
   }
 
-  return id;
+  return visitorId;
+}
+
+function getOrCreateSessionId() {
+  if (typeof window === 'undefined') return '';
+
+  let sessionId = sessionStorage.getItem(SESSION_ID_KEY);
+
+  if (!sessionId) {
+    sessionId = createId('session');
+    sessionStorage.setItem(SESSION_ID_KEY, sessionId);
+  }
+
+  return sessionId;
 }
 
 function getDeviceInfo() {
@@ -49,110 +63,130 @@ function getDeviceInfo() {
   };
 }
 
-async function updateVisitorPresence() {
+function getCurrentPageInfo() {
+  if (typeof window === 'undefined') {
+    return {
+      path: '/',
+      url: '',
+      referrer: '',
+      title: '',
+    };
+  }
+
+  return {
+    path: window.location.pathname || '/',
+    url: window.location.href || '',
+    referrer: document.referrer || '',
+    title: document.title || '',
+  };
+}
+
+async function updateVisitorPresence({ shouldCreateLog = false } = {}) {
   if (typeof window === 'undefined') return;
 
-  const visitorId = getOrCreateLocalId(VISITOR_ID_KEY, 'visitor');
-  const sessionId = getOrCreateLocalId(SESSION_ID_KEY, 'session');
+  const visitorId = getOrCreateLocalId();
+  const sessionId = getOrCreateSessionId();
 
   if (!visitorId || !sessionId) return;
 
   const nowMs = Date.now();
   const deviceInfo = getDeviceInfo();
-  const path = window.location.pathname || '/';
-  const fullUrl = window.location.href || '';
-  const referrer = document.referrer || '';
+  const pageInfo = getCurrentPageInfo();
+
+  const basePayload = {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    last_seen: serverTimestamp(),
+    last_seen_ms: nowMs,
+    active_window_seconds: ACTIVE_WINDOW_SECONDS,
+    source: 'website',
+    ...deviceInfo,
+  };
 
   await Promise.all([
     setDoc(
       doc(db, 'web_visitors', visitorId),
       {
-        visitor_id: visitorId,
+        ...basePayload,
         first_seen: serverTimestamp(),
-        last_seen: serverTimestamp(),
-        last_seen_ms: nowMs,
-        last_path: path,
-        last_url: fullUrl,
-        referrer,
-        active_window_seconds: ACTIVE_WINDOW_SECONDS,
-        source: 'website',
-        ...deviceInfo,
+        last_path: pageInfo.path,
+        last_url: pageInfo.url,
+        last_title: pageInfo.title,
+        referrer: pageInfo.referrer,
       },
       { merge: true }
     ),
     setDoc(
       doc(db, 'web_online_visitors', visitorId),
       {
-        visitor_id: visitorId,
-        session_id: sessionId,
-        last_seen: serverTimestamp(),
-        last_seen_ms: nowMs,
-        current_path: path,
-        current_url: fullUrl,
-        active_window_seconds: ACTIVE_WINDOW_SECONDS,
-        source: 'website',
-        ...deviceInfo,
-      },
-      { merge: true }
-    ),
-    setDoc(
-      doc(db, 'web_visit_logs', `${visitorId}_${nowMs}`),
-      {
-        visitor_id: visitorId,
-        session_id: sessionId,
-        visited_at: serverTimestamp(),
-        visited_at_ms: nowMs,
-        path,
-        url: fullUrl,
-        referrer,
-        source: 'website',
-        ...deviceInfo,
+        ...basePayload,
+        current_path: pageInfo.path,
+        current_url: pageInfo.url,
+        current_title: pageInfo.title,
+        referrer: pageInfo.referrer,
       },
       { merge: true }
     ),
   ]);
+
+  if (shouldCreateLog) {
+    await addDoc(collection(db, 'web_visit_logs'), {
+      visitor_id: visitorId,
+      session_id: sessionId,
+      visited_at: serverTimestamp(),
+      visited_at_ms: nowMs,
+      path: pageInfo.path,
+      url: pageInfo.url,
+      title: pageInfo.title,
+      referrer: pageInfo.referrer,
+      source: 'website',
+      ...deviceInfo,
+    });
+  }
 }
 
 export default function VisitorTracker() {
+  const pathname = usePathname();
+  const lastLoggedPathRef = useRef('');
+
   useEffect(() => {
     let timer = null;
     let stopped = false;
 
-    const safeUpdate = async () => {
+    const safeUpdate = async ({ shouldCreateLog = false } = {}) => {
       if (stopped) return;
 
       try {
-        await updateVisitorPresence();
+        await updateVisitorPresence({ shouldCreateLog });
       } catch (error) {
         console.error('Visitor tracking error:', error);
       }
     };
 
-    safeUpdate();
-    timer = window.setInterval(safeUpdate, HEARTBEAT_MS);
+    const shouldCreateLog = lastLoggedPathRef.current !== pathname;
+    lastLoggedPathRef.current = pathname;
+
+    safeUpdate({ shouldCreateLog });
+    timer = window.setInterval(() => safeUpdate({ shouldCreateLog: false }), HEARTBEAT_MS);
 
     const handleVisibilityChange = () => {
-      if (!document.hidden) safeUpdate();
+      if (!document.hidden) safeUpdate({ shouldCreateLog: false });
     };
 
-    const handleBeforeUnload = () => {
-      try {
-        updateVisitorPresence();
-      } catch {
-        // ignore unload errors
-      }
+    const handleFocus = () => {
+      safeUpdate({ shouldCreateLog: false });
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('focus', handleFocus);
 
     return () => {
       stopped = true;
       if (timer) window.clearInterval(timer);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }
