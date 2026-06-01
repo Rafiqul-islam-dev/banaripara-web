@@ -2,7 +2,7 @@
 
 import { useParams, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { addDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, getDocs, limit, query, serverTimestamp, startAfter } from 'firebase/firestore';
 
 import AppShell from '@/components/AppShell';
 import EmptyState from '@/components/EmptyState';
@@ -10,6 +10,8 @@ import Header from '@/components/Header';
 import { db } from '@/lib/firebase';
 import { doctorSpecialties, getService, isApproved } from '@/lib/serviceConfig';
 import { getUser } from '@/lib/auth';
+
+const SERVICE_PAGE_SIZE = 30;
 
 function valueForCard(data, keys) {
   for (const key of keys) {
@@ -674,6 +676,9 @@ export default function ServicePage() {
   const [shareItem, setShareItem] = useState(null);
   const [detailsItem, setDetailsItem] = useState(null);
   const [scheduleItem, setScheduleItem] = useState(null);
+  const [lastDoc, setLastDoc] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     setUser(getUser());
@@ -684,12 +689,20 @@ export default function ServicePage() {
 
     async function loadData() {
       setLoading(true);
+      setItems([]);
+      setLastDoc(null);
+      setHasMore(false);
+
       try {
-        const snap = await getDocs(collection(db, service.collection));
+        const firstQuery = query(collection(db, service.collection), limit(SERVICE_PAGE_SIZE));
+        const snap = await getDocs(firstQuery);
         const list = snap.docs
           .map((item) => ({ id: item.id, ...item.data() }))
           .filter((data) => isApproved(data));
+
         setItems(list);
+        setLastDoc(snap.docs[snap.docs.length - 1] || null);
+        setHasMore(snap.docs.length === SERVICE_PAGE_SIZE);
       } catch (error) {
         console.error('Service data load error:', error);
       } finally {
@@ -803,6 +816,38 @@ export default function ServicePage() {
       setMessage('তথ্য জমা দিতে সমস্যা হয়েছে।');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const loadMoreItems = async () => {
+    if (!service || !lastDoc || loadingMore) return;
+
+    setLoadingMore(true);
+
+    try {
+      const nextQuery = query(
+        collection(db, service.collection),
+        startAfter(lastDoc),
+        limit(SERVICE_PAGE_SIZE)
+      );
+
+      const snap = await getDocs(nextQuery);
+      const list = snap.docs
+        .map((item) => ({ id: item.id, ...item.data() }))
+        .filter((data) => isApproved(data));
+
+      setItems((prev) => {
+        const existingIds = new Set(prev.map((item) => item.id));
+        const uniqueNewItems = list.filter((item) => !existingIds.has(item.id));
+        return [...prev, ...uniqueNewItems];
+      });
+      setLastDoc(snap.docs[snap.docs.length - 1] || lastDoc);
+      setHasMore(snap.docs.length === SERVICE_PAGE_SIZE);
+    } catch (error) {
+      console.error('Load more service data error:', error);
+      setMessage('আরও তথ্য load করতে সমস্যা হয়েছে।');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -979,6 +1024,19 @@ export default function ServicePage() {
                 />
               ))}
             </section>
+
+            {hasMore && !search.trim() && (
+              <div className="flex justify-center pt-4">
+                <button
+                  type="button"
+                  onClick={loadMoreItems}
+                  disabled={loadingMore}
+                  className="rounded-2xl bg-emerald-600 px-6 py-3 font-black text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 disabled:opacity-60"
+                >
+                  {loadingMore ? 'আরও তথ্য আসছে...' : 'আরও তথ্য দেখুন'}
+                </button>
+              </div>
+            )}
           </>
         )}
 

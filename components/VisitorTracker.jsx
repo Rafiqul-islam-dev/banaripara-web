@@ -8,8 +8,9 @@ import { db } from '@/lib/firebase';
 
 const VISITOR_ID_KEY = 'banaripara_visitor_id';
 const SESSION_ID_KEY = 'banaripara_session_id';
-const HEARTBEAT_MS = 15000;
-const ACTIVE_WINDOW_SECONDS = 90;
+const HEARTBEAT_MS = 120000;
+const ACTIVE_WINDOW_SECONDS = 300;
+const LOGGED_PATHS_KEY = 'banaripara_logged_paths';
 
 function createId(prefix) {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -43,6 +44,27 @@ function getOrCreateSessionId() {
   }
 
   return sessionId;
+}
+
+
+function shouldLogPath(path) {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    const sessionId = getOrCreateSessionId();
+    const key = `${LOGGED_PATHS_KEY}_${sessionId}`;
+    const raw = sessionStorage.getItem(key);
+    const logged = JSON.parse(raw || '[]');
+
+    if (Array.isArray(logged) && logged.includes(path)) return false;
+
+    const nextLogged = Array.isArray(logged) ? [...logged, path] : [path];
+    sessionStorage.setItem(key, JSON.stringify(nextLogged.slice(-30)));
+
+    return true;
+  } catch {
+    return true;
+  }
 }
 
 function getDeviceInfo() {
@@ -163,8 +185,9 @@ export default function VisitorTracker() {
       }
     };
 
-    const shouldCreateLog = lastLoggedPathRef.current !== pathname;
-    lastLoggedPathRef.current = pathname;
+    const currentPath = pathname || '/';
+    const shouldCreateLog = lastLoggedPathRef.current !== currentPath && shouldLogPath(currentPath);
+    lastLoggedPathRef.current = currentPath;
 
     safeUpdate({ shouldCreateLog });
     timer = window.setInterval(() => safeUpdate({ shouldCreateLog: false }), HEARTBEAT_MS);
