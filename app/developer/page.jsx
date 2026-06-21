@@ -70,11 +70,11 @@ export default function DeveloperPage() {
           </a>
 
           <a
-            href="mailto:rafiqulislamsohel.bd@gmail.com"
+            href="call:01714963096"
             className="flex items-center justify-center gap-3 rounded-[24px] border border-emerald-200 bg-white px-6 py-5 text-xl font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-50"
           >
-            <span className="text-2xl">✉️</span>
-            Email করুন
+            <span className="text-2xl">📞</span>
+            01714963096
           </a>
         </div>
       </div>
